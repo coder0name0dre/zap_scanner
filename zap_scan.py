@@ -1,7 +1,9 @@
 import time
+import json
+import csv
 from zapv2 import ZAPv2
 
-# Configuration #
+# Configuration #
 
 # target website
 target_url = "https://demo.owasp-juice.shop"
@@ -9,6 +11,10 @@ target_url = "https://demo.owasp-juice.shop"
 # ZAP API configuration
 zap_api_key = ""  # leave empty unless you configured one
 zap_proxy = "http://127.0.0.1:8080"
+
+# output files
+json_output = "results.json"
+csv_output = "results.csv"
 
 
 # Connect To ZAP #
@@ -65,27 +71,50 @@ alerts = zap.core.alerts(baseurl=target_url)
 print(f"Total alerts found: {len(alerts)}")
 
 
-# Print Results To Terminal #
+# Save Results To JSON #
 
-for index, alert in enumerate(alerts, start=1):
-    print("=" * 20)
-    print(f"Vulnerability #{index}")
-    print("=" * 20)
+print("Saving results to JSON file...")
 
-    print(f"Alert Name   : {alert.get('alert')}")
-    print(f"Risk Level   : {alert.get('risk')}")
-    print(f"Confidence   : {alert.get('confidence')}")
-    print(f"URL          : {alert.get('url')}")
-    print(f"Parameter   : {alert.get('param')}\n")
+with open(json_output, "w") as json_file:
+    json.dump(alerts, json_file, indent=4)
 
-    print("Description:")
-    print(alert.get("description", "No description provided."))
+print(f"Results saved to {json_output}")
 
-    print("\nSolution:")
-    print(alert.get("solution", "No solution provided."))
+
+# Save Results to CSV #
+
+print("Saving results to CSV file...")
+
+# Define CSV columns
+csv_headers = [
+    "alert",
+    "risk",
+    "confidence",
+    "url",
+    "param",
+    "description",
+    "solution"
+]
+
+with open(csv_output, "w", newline="", encoding="utf-8") as csv_file:
+    writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
+    writer.writeheader()
+
+    for alert in alerts:
+        writer.writerow({
+            "alert": alert.get("alert"),
+            "risk": alert.get("risk"),
+            "confidence": alert.get("confidence"),
+            "url": alert.get("url"),
+            "param": alert.get("param"),
+            "description": alert.get("description"),
+            "solution": alert.get("solution")
+        })
+
+print(f"Results saved to {csv_output}")
 
 
 # Finished #
 
 print("\nScan completed successfully!")
-print("Results displayed above in the terminal")
+print("Check results.json and results.csv for details.")
